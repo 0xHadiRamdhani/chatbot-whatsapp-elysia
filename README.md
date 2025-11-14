@@ -469,11 +469,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 📧 Email: support@your-domain.com
-- 💬 Discord: [Join our Discord](https://discord.gg/your-server)
-- 📖 Documentation: [Full Documentation](https://docs.your-domain.com)
-- 🐛 Issues: [GitHub Issues](https://github.com/your-repo/issues)
+- 📧 Email: hadsxdev@gmail.com
+- 💬 Discord: [Join our Discord](https://discord.gg/imphnen)
+- 🐛 Issues: [GitHub Issues](https://github.com/0xHadiRamdhani/chatbot-whatsapp-elysia/issues)
 
 ---
 
-Made with ❤️ by [Your Name](https://github.com/your-username)
+Author [Hadi Ramdhani](https://github.com/0xHadiRamdhani)
