@@ -1,7 +1,7 @@
 import { Client, LocalAuth, Message } from 'whatsapp-web.js';
 import qrcode from 'qrcode-terminal';
 import { EventEmitter } from 'events';
-import type { BotConfig, ReconnectOptions } from '@/types';
+import type { BotConfig } from '@/types';
 import { logger } from '@/utils/logger';
 import { DatabaseService } from '@/database';
 
@@ -186,6 +186,12 @@ export class WhatsAppClient extends EventEmitter {
         } catch (error) {
             logger.error({ err: error }, 'WhatsApp client health check failed');
             this.emit('health_check_failed', error);
+
+            // If health check fails, consider triggering reconnection logic
+            if (this.reconnectAttempts < this.config.maxReconnectAttempts && !this.reconnecting) {
+                logger.info('Health check failed, scheduling reconnection');
+                this.scheduleReconnection();
+            }
         }
     }
 
@@ -297,11 +303,21 @@ export class WhatsAppClient extends EventEmitter {
     }
 
     getState(): string {
-        return this.client.info ? 'CONNECTED' : 'DISCONNECTED';
+        try {
+            return this.client.info ? 'CONNECTED' : 'DISCONNECTED';
+        } catch (error) {
+            logger.debug('Error getting client state, assuming DISCONNECTED');
+            return 'DISCONNECTED';
+        }
     }
 
     isReady(): boolean {
-        return this.client.info !== null;
+        try {
+            return this.client.info !== null && this.client.info !== undefined;
+        } catch (error) {
+            logger.debug('Error checking client readiness');
+            return false;
+        }
     }
 
     getReconnectAttempts(): number {
@@ -314,18 +330,33 @@ export class WhatsAppClient extends EventEmitter {
 
     // Utility methods
     formatPhoneNumber(phone: string): string {
-        // Remove all non-numeric characters
-        const cleaned = phone.replace(/\D/g, '');
+        if (!phone || typeof phone !== 'string') {
+            logger.warn('Invalid phone number provided');
+            return '';
+        }
 
-        // Add country code if not present
-        if (cleaned.length === 10) {
-            return `1${cleaned}@c.us`;
-        } else if (cleaned.length === 11 && cleaned.startsWith('1')) {
-            return `${cleaned}@c.us`;
-        } else if (cleaned.length === 12 && cleaned.startsWith('55')) {
-            return `${cleaned}@c.us`;
-        } else {
-            return `${cleaned}@c.us`;
+        try {
+            // Remove all non-numeric characters
+            const cleaned = phone.replace(/\D/g, '');
+
+            if (cleaned.length === 0) {
+                logger.warn('Phone number contains no valid digits');
+                return '';
+            }
+
+            // Add country code if not present and format for WhatsApp
+            if (cleaned.length === 10) {
+                return `1${cleaned}@c.us`;
+            } else if (cleaned.length === 11 && cleaned.startsWith('1')) {
+                return `${cleaned}@c.us`;
+            } else if (cleaned.length === 12 && cleaned.startsWith('55')) {
+                return `${cleaned}@c.us`;
+            } else {
+                return `${cleaned}@c.us`;
+            }
+        } catch (error) {
+            logger.error({ err: error, phone }, 'Error formatting phone number');
+            return '';
         }
     }
 

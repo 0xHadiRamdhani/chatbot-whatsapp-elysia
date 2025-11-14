@@ -145,7 +145,7 @@ export class WhatsAppBot {
             logger.info('WhatsApp client ready');
         });
 
-        this.whatsappClient.on('qr', (qr: string) => {
+        this.whatsappClient.on('qr', (_qr: string) => {
             logger.info('QR Code generated');
         });
 
